@@ -1,0 +1,5 @@
+master(v0.1.1):
+    Feature:
+        - md5
+        - state
+        - padding
