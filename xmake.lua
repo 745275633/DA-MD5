@@ -6,13 +6,6 @@ target("DA-MD5")
 	add_files("src/*.cpp") 
 	add_headers("src/(DA/*.hpp)")
 	before_build(function (target)
-		if not os.exists("/usr/include/boost") then
-			if io.stderr == nil then
-				io.stderr = io.open("/dev/stderr", "a")
-			end
-			io.stderr:print("Need boost");
-			io.stderr:print("Install it with package manager")
-			io.stderr:print("Or http://www.boost.org/")
-			os.exit(1);
-		end
+		assert(os.isdir("/usr/include/boost"),
+			"Need boost\nInstall it with package manager\nOr visit http://www.boost.org/")
 	end)
