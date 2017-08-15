@@ -73,7 +73,7 @@ const std::array<byte, 16> MD5::digest()
 {
   if (!_finished) {
     _finished = true;
-    final();
+    end();
   }
   return _digest;
 }
@@ -142,7 +142,7 @@ void MD5::update(const std::vector<byte>& input)
       std::next(_buffer.begin(), index));
 }
 
-void MD5::final()
+void MD5::end()
 {
   std::array<uint32, 4> oldState(_state);
   std::array<uint32, 2> oldCount(_count);
@@ -270,9 +270,10 @@ std::vector<uint32> MD5::decode(const std::vector<byte>& input)
   return output;
 }
 
-/* Convert byte array to hex string. */
-std::string MD5::bytesToHexString(std::vector<byte> input)
+/* Convert digest to string value */
+std::string MD5::toString() const
 {
+  auto input = digest();
   std::string str;
   str.reserve(input.size() << 1);
   for (const auto & t : input) {
@@ -282,13 +283,6 @@ std::string MD5::bytesToHexString(std::vector<byte> input)
     str.append(1, _data.hex_number.at(b));
   }
   return str;
-}
-
-/* Convert digest to string value */
-std::string MD5::toString()
-{
-  auto tmp = digest();
-  return bytesToHexString({tmp.begin(), tmp.end()});
 }
 
 } // namespace MD5

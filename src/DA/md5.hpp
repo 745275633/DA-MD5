@@ -78,12 +78,10 @@ private:
   bool _finished;
 
   const static int BUFFER_SIZE = 1024;
-  void final();
+  void end();
   void transform(const std::array<byte, 64>& block);
   std::vector<byte> encode(const std::vector<uint32>& input);
   std::vector<uint32> decode(const std::vector<byte>& input);
-  std::string bytesToHexString(const byte* input, size_t length);
-  std::string bytesToHexString(std::vector<byte> input);
 
 public:
   MD5();
@@ -96,8 +94,8 @@ public:
   void update(const std::string& str);
   void update(std::istream& in);
   void update(const std::vector<byte>& input);
-  const std::array<byte, 16> digest();
-  std::string toString();
+  std::array<byte, 16> digest() const;
+  std::string toString() const;
   void reset();
 };
 
