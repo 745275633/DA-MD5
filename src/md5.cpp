@@ -65,7 +65,6 @@ std::array<byte, 16> MD5::digest() const
   return _digest;
 }
 
-/* Reset the calculate state */
 void MD5::reset()
 {
   _state = _data.state;
@@ -74,35 +73,8 @@ void MD5::reset()
   _buffer = {0};
 }
 
-void MD5::update(const std::string& str)
+void MD5::up(const std::vector<byte>& input)
 {
-  update(std::vector<byte>{str.begin(), str.end()});
-}
-
-/* Updating the context with a file. */
-void MD5::update(std::istream& in)
-{
-  if (!in) {
-    return;
-  }
-
-  std::streamsize length;
-  char buffer[BUFFER_SIZE];
-  while (!in.eof()) {
-    in.read(buffer, BUFFER_SIZE);
-    length = in.gcount();
-    if (length > 0) update(std::string(buffer, length));
-  }
-}
-
-/* MD5 block update operation. Continues an MD5 message-digest
-operation, processing another message block, and updating the
-context.
-*/
-void MD5::update(const std::vector<byte>& input)
-{
-  reset();
-
   uint32 index = (_count[0] >> 3) & 0x3f;
 
   if ((_count[0] += (input.size() << 3)) < (input.size() << 3)) ++_count[1];
@@ -128,7 +100,34 @@ void MD5::update(const std::vector<byte>& input)
   }
   std::copy_n(std::next(input.begin(), i), input.size() - i,
       std::next(_buffer.begin(), index));
+}
 
+void MD5::update(const std::string& str)
+{
+  update(std::vector<byte>{str.begin(), str.end()});
+}
+
+void MD5::update(std::istream& in)
+{
+  if (!in) {
+    return;
+  }
+
+  std::streamsize length;
+  char buffer[BUFFER_SIZE];
+  std::stringstream ss;
+  while (!in.eof()) {
+    in.read(buffer, BUFFER_SIZE);
+    length = in.gcount();
+    if (length > 0) ss << std::string(buffer, length);
+  }
+  update(ss.str());
+}
+
+void MD5::update(const std::vector<byte>& input)
+{
+  reset();
+  up(input);
   end();
 }
 
@@ -142,9 +141,9 @@ void MD5::end()
 
   index = uint32((_count[0] >> 3) & 0x3f);
   padLen = (index < 56) ? (56 - index) : (120 - index);
-  update(std::vector<byte>{_data.padding.begin(), std::next(_data.padding.begin(), padLen)});
+  up(std::vector<byte>{_data.padding.begin(), std::next(_data.padding.begin(), padLen)});
 
-  update(bits);
+  up(bits);
 
   std::copy_n(encode({_state.begin(), _state.end()}).begin(), _digest.size(),
       _digest.begin());

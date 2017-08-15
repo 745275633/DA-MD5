@@ -80,6 +80,8 @@ private:
   void end();
   void transform(const std::array<byte, 64>& block);
 
+  void up(const std::vector<byte>& input);
+
   static std::vector<byte> encode(const std::vector<uint32>& input);
   static std::vector<uint32> decode(const std::vector<byte>& input);
 

@@ -1,4 +1,6 @@
 master(v0.1.3):
+  Fix:
+    - update() segmentation fault
   Code:
     - final() -> end()
     - remove unused func
