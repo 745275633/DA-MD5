@@ -1,12 +1,6 @@
 #include "DA/md5.hpp"
 #include <algorithm>
-#include <iterator>
-#include <sstream>
 
-namespace DA
-{
-namespace MD5
-{
 #define S11 7
 #define S12 12
 #define S13 17
@@ -45,123 +39,36 @@ namespace MD5
   (a) += (b); \
 }
 
-MD5::MD5():
-  _count{0},
-  _state(_data.state),
-  _buffer{0},
-  _digest{0}
-{}
-
-MD5::MD5(data a):
-  _data(std::move(a)),
-  _count{0},
-  _state(a.state),
-  _buffer{0},
-  _digest{0}
-{}
-
-std::array<byte, 16> MD5::digest() const
+namespace DA
 {
-  return _digest;
-}
-
-void MD5::reset()
+namespace MD5
 {
-  _state = _data.state;
-  _count = {0};
-  _digest = {0};
-  _buffer = {0};
-}
-
-void MD5::up(const std::vector<byte>& input)
+namespace
 {
-  uint32 i, index, partLen;
-
-  index = uint32((_count[0] >> 3) & 0x3f);
-
-  if ((_count[0] += uint32(input.size() << 3)) < uint32(input.size() << 3))
-  {
-    ++_count[1];
+std::vector<byte> encode(const std::vector<uint32>& input)
+{
+  std::vector<byte> output;
+  for (const auto & i : input) {
+    output.push_back(i & 0xff);
+    output.push_back((i >> 8) & 0xff);
+    output.push_back((i >> 16) & 0xff);
+    output.push_back((i >> 24) & 0xff);
   }
-  _count[1] += uint32(input.size() >> 29);
-
-  partLen = 64 - index;
-
-  if (input.size() >= partLen)
-  {
-    std::copy(input.begin(), input.end(),
-        std::next(_buffer.begin(), index));
-    transform(_buffer);
-
-    for (i = partLen; i + 63 < input.size(); i += 64)
-    {
-      std::array<byte, 64> tmp;
-      std::copy_n(std::next(input.begin(), i), 64,
-          tmp.begin());
-      transform(std::move(tmp));
-    }
-    index = 0;
-
-  }
-  else
-  {
-    i = 0;
-  }
-  std::copy_n(std::next(input.begin(), i), input.size() - i,
-      std::next(_buffer.begin(), index));
+  return output;
 }
 
-void MD5::update(const std::string& str)
+std::vector<uint32> decode(const std::vector<byte>& input)
 {
-  update(std::vector<byte>{str.begin(), str.end()});
-}
-
-void MD5::update(std::istream& in)
-{
-  if (!in) {
-    return;
+  std::vector<uint32> output;
+  for (decltype(input.size()) j = 0; j < input.size(); j += 4) {
+    output.push_back(uint32(input[j]) | (uint32(input[j + 1]) << 8) |
+        (uint32(input[j + 2]) << 16) | (uint32(input[j + 3]) << 24));
   }
-
-  std::streamsize length;
-  char buffer[BUFFER_SIZE];
-  std::stringstream ss;
-  while (!in.eof()) {
-    in.read(buffer, BUFFER_SIZE);
-    length = in.gcount();
-    if (length > 0) ss << std::string(buffer, length);
-  }
-  update(ss.str());
+  return output;
 }
 
-void MD5::update(const std::vector<byte>& input)
-{
-  reset();
-  up(input);
-  end();
-}
+} // namespace
 
-void MD5::end()
-{
-  std::array<uint32, 4> oldState(_state);
-  std::array<uint32, 2> oldCount(_count);
-  uint32 index, padLen;
-
-  auto bits = encode({_count.begin(), _count.end()});
-
-  index = uint32((_count[0] >> 3) & 0x3f);
-  padLen = (index < 56) ? (56 - index) : (120 - index);
-  up(std::vector<byte>{_data.padding.begin(), std::next(_data.padding.begin(), padLen)});
-
-  up(bits);
-
-  std::copy_n(encode({_state.begin(), _state.end()}).begin(), _digest.size(),
-      _digest.begin());
-
-  _state = oldState;
-  _count = oldCount;
-}
-
-/* MD5 basic transformation. Transforms _state based on block. */
 void MD5::transform(const std::array<byte, 64>& block)
 {
   uint32 a = _state[0], b = _state[1], c = _state[2], d = _state[3];
@@ -246,72 +153,26 @@ void MD5::transform(const std::array<byte, 64>& block)
   _state[3] += d;
 }
 
-std::vector<byte> MD5::encode(const std::vector<uint32>& input)
+void MD5::end()
 {
-  std::vector<byte> output;
-  for (const auto & i : input) {
-    output.push_back(i & 0xff);
-    output.push_back((i >> 8) & 0xff);
-    output.push_back((i >> 16) & 0xff);
-    output.push_back((i >> 24) & 0xff);
-  }
-  return output;
+  std::array<uint32, 4> oldState(_state);
+  std::array<uint32, 2> oldCount(_count);
+  uint32 index, padLen;
+
+  auto bits = encode({_count.begin(), _count.end()});
+
+  index = uint32((_count[0] >> 3) & 0x3f);
+  padLen = (index < 56) ? (56 - index) : (120 - index);
+  up(std::vector<byte>{_data.padding.begin(), std::next(_data.padding.begin(), padLen)});
+
+  up(bits);
+
+  std::copy_n(encode({_state.begin(), _state.end()}).begin(), _digest.size(),
+      _digest.begin());
+
+  _state = oldState;
+  _count = oldCount;
 }
 
-std::vector<uint32> MD5::decode(const std::vector<byte>& input)
-{
-  std::vector<uint32> output;
-  for (decltype(input.size()) j = 0; j < input.size(); j += 4) {
-    output.push_back(uint32(input[j]) | (uint32(input[j + 1]) << 8) |
-        (uint32(input[j + 2]) << 16) | (uint32(input[j + 3]) << 24));
-  }
-  return output;
-}
-
-/* Convert digest to string value */
-std::string MD5::toString() const
-{
-  auto input = digest();
-  std::string str;
-  str.reserve(input.size() << 1);
-  for (const auto & t : input) {
-    int a = t / 16;
-    int b = t % 16;
-    str.append(1, _data.hex_number.at(a));
-    str.append(1, _data.hex_number.at(b));
-  }
-  return str;
-}
-
-std::string MD5::operator()()
-{
-  return toString();
-}
-std::string MD5::operator()(const std::string& str)
-{
-  update(str);
-  return toString();
-}
-std::string MD5::operator()(std::istream& in)
-{
-  update(in);
-  return toString();
-}
-std::string MD5::operator()(const std::vector<byte>& input)
-{
-  update(input);
-  return toString();
-}
-
-std::ostream& operator<<(std::ostream& out, const MD5& md5)
-{
-  out << md5.toString();
-  return out;
-}
-std::istream& operator>>(std::istream& in, MD5& md5)
-{
-  md5.update(in);
-  return in;
-}
 } // namespace MD5
 } // namespace DA
