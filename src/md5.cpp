@@ -53,7 +53,6 @@ namespace MD5
 }
 
 MD5::MD5():
-  _finished(false),
   _count{0},
   _state(_data.state),
   _buffer{0},
@@ -62,28 +61,24 @@ MD5::MD5():
 
 MD5::MD5(data a):
   _data(std::move(a)),
-  _finished(false),
   _count{0},
   _state(a.state),
   _buffer{0},
   _digest{0}
 {}
 
-const std::array<byte, 16> MD5::digest()
+std::array<byte, 16> MD5::digest() const
 {
-  if (!_finished) {
-    _finished = true;
-    end();
-  }
   return _digest;
 }
 
 /* Reset the calculate state */
 void MD5::reset()
 {
-  _finished = false;
-  _count[0] = _count[1] = 0;
   _state = _data.state;
+  _count = {0};
+  _digest = {0};
+  _buffer = {0};
 }
 
 void MD5::update(const std::string& str)
@@ -113,7 +108,7 @@ context.
 */
 void MD5::update(const std::vector<byte>& input)
 {
-  _finished = false;
+  reset();
 
   uint32 index = (_count[0] >> 3) & 0x3f;
 
@@ -140,6 +135,8 @@ void MD5::update(const std::vector<byte>& input)
   }
   std::copy_n(std::next(input.begin(), i), input.size() - i,
       std::next(_buffer.begin(), index));
+
+  end();
 }
 
 void MD5::end()

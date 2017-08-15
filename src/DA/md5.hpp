@@ -75,13 +75,13 @@ private:
   std::array<uint32, 2> _count;
   std::array<byte, 64> _buffer;
   std::array<byte, 16> _digest;
-  bool _finished;
 
   const static int BUFFER_SIZE = 1024;
   void end();
   void transform(const std::array<byte, 64>& block);
-  std::vector<byte> encode(const std::vector<uint32>& input);
-  std::vector<uint32> decode(const std::vector<byte>& input);
+
+  static std::vector<byte> encode(const std::vector<uint32>& input);
+  static std::vector<uint32> decode(const std::vector<byte>& input);
 
 public:
   MD5();
@@ -91,12 +91,14 @@ public:
   MD5& operator=(const MD5&) = default;
   MD5(MD5&&) noexcept(false) /*For clang-tidy*/ = default;
   MD5& operator=(MD5&&) noexcept(false) = default;
+  void reset();
+
   void update(const std::string& str);
   void update(std::istream& in);
   void update(const std::vector<byte>& input);
+
   std::array<byte, 16> digest() const;
   std::string toString() const;
-  void reset();
 };
 
 } // namespace MD5
