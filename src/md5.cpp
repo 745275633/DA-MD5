@@ -24,31 +24,24 @@ namespace MD5
 #define S43 15
 #define S44 21
 
-#define F _data.f
-#define G _data.g
-#define H _data.h
-#define I _data.i
-
-#define ROTATE_LEFT _data.rotate_left
-
 #define FF(a, b, c, d, x, s, ac) { \
-  (a) += F ((b), (c), (d)) + (x) + (ac); \
-  (a) = ROTATE_LEFT ((a), (s)); \
+  (a) += _data.f((b), (c), (d)) + (x) + (ac); \
+  (a) = _data.rotate_left((a), (s)); \
   (a) += (b); \
 }
 #define GG(a, b, c, d, x, s, ac) { \
-  (a) += G ((b), (c), (d)) + (x) + (ac); \
-  (a) = ROTATE_LEFT ((a), (s)); \
+  (a) += _data.g((b), (c), (d)) + (x) + (ac); \
+  (a) = _data.rotate_left((a), (s)); \
   (a) += (b); \
 }
 #define HH(a, b, c, d, x, s, ac) { \
-  (a) += H ((b), (c), (d)) + (x) + (ac); \
-  (a) = ROTATE_LEFT ((a), (s)); \
+  (a) += _data.h((b), (c), (d)) + (x) + (ac); \
+  (a) = _data.rotate_left((a), (s)); \
   (a) += (b); \
 }
 #define II(a, b, c, d, x, s, ac) { \
-  (a) += I ((b), (c), (d)) + (x) + (ac); \
-  (a) = ROTATE_LEFT ((a), (s)); \
+  (a) += _data.i((b), (c), (d)) + (x) + (ac); \
+  (a) = _data.rotate_left((a), (s)); \
   (a) += (b); \
 }
 
