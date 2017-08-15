@@ -1,4 +1,13 @@
 master(v0.1.3):
+  Feature:
+    - operator:
+      - ():
+        - void
+        - string
+        - istream
+        - vector
+      - <<
+      - >>
   Fix:
     - update() segmentation fault
   Code:

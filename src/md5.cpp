@@ -75,27 +75,36 @@ void MD5::reset()
 
 void MD5::up(const std::vector<byte>& input)
 {
-  uint32 index = (_count[0] >> 3) & 0x3f;
+  uint32 i, index, partLen;
 
-  if ((_count[0] += (input.size() << 3)) < (input.size() << 3)) ++_count[1];
-  _count[1] += input.size() >> 29;
+  index = uint32((_count[0] >> 3) & 0x3f);
 
-  uint32 i = 64 - index;
+  if ((_count[0] += uint32(input.size() << 3)) < uint32(input.size() << 3))
+  {
+    ++_count[1];
+  }
+  _count[1] += uint32(input.size() >> 29);
 
-  if (input.size() >= i) {
+  partLen = 64 - index;
+
+  if (input.size() >= partLen)
+  {
     std::copy(input.begin(), input.end(),
         std::next(_buffer.begin(), index));
     transform(_buffer);
 
-    // TODO(clang-tidy): warning: [misc-misplaced-widening-cast]
-    for (; (i + 63) < input.size(); i += 64) {
-      std::array<byte, 64> tmp = {0};
+    for (i = partLen; i + 63 < input.size(); i += 64)
+    {
+      std::array<byte, 64> tmp;
       std::copy_n(std::next(input.begin(), i), 64,
           tmp.begin());
-      transform(tmp);
+      transform(std::move(tmp));
     }
     index = 0;
-  } else {
+
+  }
+  else
+  {
     i = 0;
   }
   std::copy_n(std::next(input.begin(), i), input.size() - i,
@@ -274,5 +283,35 @@ std::string MD5::toString() const
   return str;
 }
 
+std::string MD5::operator()()
+{
+  return toString();
+}
+std::string MD5::operator()(const std::string& str)
+{
+  update(str);
+  return toString();
+}
+std::string MD5::operator()(std::istream& in)
+{
+  update(in);
+  return toString();
+}
+std::string MD5::operator()(const std::vector<byte>& input)
+{
+  update(input);
+  return toString();
+}
+
+std::ostream& operator<<(std::ostream& out, const MD5& md5)
+{
+  out << md5.toString();
+  return out;
+}
+std::istream& operator>>(std::istream& in, MD5& md5)
+{
+  md5.update(in);
+  return in;
+}
 } // namespace MD5
 } // namespace DA

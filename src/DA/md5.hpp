@@ -101,7 +101,15 @@ public:
 
   std::array<byte, 16> digest() const;
   std::string toString() const;
+
+  std::string operator()();
+  std::string operator()(const std::string& str);
+  std::string operator()(std::istream& in);
+  std::string operator()(const std::vector<byte>& input);
 };
+
+std::ostream& operator<<(std::ostream& out, const MD5& md5);
+std::istream& operator>>(std::istream& in, MD5& md5);
 
 } // namespace MD5
 } // namespace DA
